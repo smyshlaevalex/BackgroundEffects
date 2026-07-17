@@ -65,6 +65,10 @@ struct BackgroundEffectWrapperView: UIViewRepresentable {
         }
         
         if isStopped {
+            DispatchQueue.main.async {
+                isStopped = false
+            }
+            
             uiView.effect = nil
             context.coordinator.animator?.stopAnimation(true)
             context.coordinator.animator = makeAnimator(view: uiView)
