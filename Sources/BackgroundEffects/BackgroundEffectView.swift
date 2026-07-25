@@ -54,3 +54,11 @@ public struct BackgroundEffectView: View {
         return glass
     }
 }
+
+public extension View {
+    func backgroundEffect(_ effect: BackgroundEffect) -> some View {
+        background {
+            BackgroundEffectView(effect)
+        }
+    }
+}
