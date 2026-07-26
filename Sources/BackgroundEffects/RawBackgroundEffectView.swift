@@ -7,6 +7,30 @@
 
 import SwiftUI
 
+final class StaticAnimationDriver: Hashable {
+    var fractionComplete: CGFloat
+    
+    init(fractionComplete: CGFloat) {
+        self.fractionComplete = fractionComplete
+    }
+    
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(fractionComplete)
+    }
+    
+    static func == (lhs: StaticAnimationDriver, rhs: StaticAnimationDriver) -> Bool {
+        lhs.fractionComplete == rhs.fractionComplete
+    }
+}
+
+struct StaticAnimation: CustomAnimation {
+    let driver: StaticAnimationDriver
+    
+    nonisolated func animate<V>(value: V, time: TimeInterval, context: inout AnimationContext<V>) -> V? where V : VectorArithmetic {
+        value.scaled(by: driver.fractionComplete)
+    }
+}
+
 struct RawBackgroundEffectView: View {
     var effect: UIVisualEffect = UIBlurEffect(style: .regular)
     var intensity: CGFloat = 0
@@ -37,7 +61,7 @@ struct BackgroundEffectWrapperView: UIViewRepresentable {
     func makeUIView(context: Context) -> UIVisualEffectView {
         let view = UIVisualEffectView(effect: nil)
         
-        context.coordinator.animator = makeAnimator(view: view)
+        restartAnimation(view: view, driver: context.coordinator.driver)
         
         context.coordinator.willEnterForeground = NotificationCenter.default.addObserver(
             forName: UIApplication.willEnterForegroundNotification,
@@ -48,8 +72,7 @@ struct BackgroundEffectWrapperView: UIViewRepresentable {
                 DispatchQueue.main.async {
                     isStopped = true
                     view.effect = nil
-                    context.coordinator.animator?.stopAnimation(true)
-                    context.coordinator.animator = makeAnimator(view: view)
+                    restartAnimation(view: view, driver: context.coordinator.driver)
                 }
             }
         }
@@ -70,37 +93,32 @@ struct BackgroundEffectWrapperView: UIViewRepresentable {
             }
             
             uiView.effect = nil
-            context.coordinator.animator?.stopAnimation(true)
-            context.coordinator.animator = makeAnimator(view: uiView)
+            restartAnimation(view: uiView, driver: context.coordinator.driver)
         }
         
-        DispatchQueue.main.async {
-            context.coordinator.animator?.fractionComplete = intensity
-        }
+        context.coordinator.driver.fractionComplete = intensity
     }
     
     static func dismantleUIView(_ uiView: UIVisualEffectView, coordinator: Coordinator) {
-        coordinator.animator?.stopAnimation(true)
         if let willEnterForeground = coordinator.willEnterForeground {
             NotificationCenter.default.removeObserver(willEnterForeground)
         }
     }
     
-    private func makeAnimator(view: UIVisualEffectView) -> UIViewPropertyAnimator {
-        let animator = UIViewPropertyAnimator(duration: 1, curve: .linear) { [weak view] in
-            view?.effect = effect
+    private func restartAnimation(view: UIVisualEffectView, driver: StaticAnimationDriver) {
+        DispatchQueue.main.async {
+            UIView.animate(Animation(StaticAnimation(driver: driver))) {
+                view.effect = effect
+            } completion: {
+                isStopped = true
+            }
         }
-        animator.addCompletion { _ in
-            isStopped = true
-        }
-        
-        return animator
     }
 }
 
 extension BackgroundEffectWrapperView {
     final class Coordinator {
-        var animator: UIViewPropertyAnimator?
+        let driver = StaticAnimationDriver(fractionComplete: 0)
         var willEnterForeground: NSObjectProtocol?
     }
 }
