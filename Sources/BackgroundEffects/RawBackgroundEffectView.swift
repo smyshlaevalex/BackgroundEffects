@@ -7,6 +7,21 @@
 
 import SwiftUI
 
+@available(iOS 26.0, *)
+struct BackdropView: View {
+    var body: some View {
+        GeometryReader { proxy in
+            Color.red
+                .opacity(0)
+                .frame(width: proxy.size.width, height: proxy.size.height)
+                .backgroundExtensionEffect()
+                .safeAreaPadding(.top, 1)
+                .frame(width: proxy.size.width, height: proxy.size.height, alignment: .bottom)
+                .clipped()
+        }
+    }
+}
+
 struct RawBackgroundEffectView: View {
     var effect: UIVisualEffect = UIBlurEffect(style: .regular)
     var intensity: CGFloat = 0
@@ -15,10 +30,14 @@ struct RawBackgroundEffectView: View {
     @State private var update = 0
     
     public var body: some View {
-        BackgroundEffectWrapperView(effect: effect, intensity: intensity, cornerConfiguration: cornerConfiguration, update: update)
-            .onAppear {
-                update += 1
-            }
+        if #available(iOS 26.0, *), intensity == 0 {
+            BackdropView()
+        } else {
+            BackgroundEffectWrapperView(effect: effect, intensity: intensity, cornerConfiguration: cornerConfiguration, update: update)
+                .onAppear {
+                    update += 1
+                }
+        }
     }
 }
 

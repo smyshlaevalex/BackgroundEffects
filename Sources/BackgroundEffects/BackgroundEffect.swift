@@ -30,12 +30,18 @@ public struct BackgroundBlurEffect: BackgroundEffect {
     let opaque: Bool
 }
 
+@available(iOS 26.0, *)
+public struct BackgroundSimpleVariableBlurEffect: BackgroundEffect {
+    let edge: Edge
+}
+
 public struct BackgroundVariableBlurEffect: BackgroundEffect {
     let radius: CGFloat
     let edge: Edge
     let gradientStops: [CGFloat]
 }
 
+@available(iOS 26.0, *)
 public struct BackgroundLensEffect: BackgroundEffect {
     let configuration: LiquidLensConfiguration
     let isResting: Bool
@@ -72,6 +78,13 @@ public extension BackgroundEffect where Self == BackgroundBlurEffect {
     }
 }
 
+@available(iOS 26.0, *)
+public extension BackgroundEffect where Self == BackgroundSimpleVariableBlurEffect {
+    static func simpleVariableBlur(edge: Edge = .top) -> BackgroundSimpleVariableBlurEffect {
+        BackgroundSimpleVariableBlurEffect(edge: edge)
+    }
+}
+
 public extension BackgroundEffect where Self == BackgroundVariableBlurEffect {
     static func variableBlur(radius: CGFloat, edge: Edge = .top, segments: Int = 10) -> BackgroundVariableBlurEffect {
         BackgroundVariableBlurEffect(
@@ -88,6 +101,7 @@ public extension BackgroundEffect where Self == BackgroundVariableBlurEffect {
     }
 }
 
+@available(iOS 26.0, *)
 public extension BackgroundEffect where Self == BackgroundLensEffect {
     static func lens(configuration: LiquidLensConfiguration = LiquidLensConfiguration(), isResting: Bool) -> BackgroundLensEffect {
         BackgroundLensEffect(configuration: configuration, isResting: isResting)

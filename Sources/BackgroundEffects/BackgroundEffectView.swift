@@ -32,6 +32,9 @@ public struct BackgroundEffectView: View {
         default:
             if #available(iOS 26.0, *) {
                 switch effect {
+                case let simpleVariableBlurEffect as BackgroundSimpleVariableBlurEffect:
+                    SimpleVariableBlurView(edge: simpleVariableBlurEffect.edge)
+                    
                 case let glassEffect as BackgroundGlassEffect:
                     RawBackgroundEffectView(effect: glass(from: glassEffect), intensity: glassEffect.intensity, cornerConfiguration: glassEffect.corners)
                     
